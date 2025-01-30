@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG Perícias</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Configuração de Perícias</h2>
+        <label for="area">Área de Perícia:</label>
+        <select id="area" onchange="atualizarPericias()">
+            <option value="Combate">Perícias de Combate</option>
+            <option value="Sociais">Perícias Sociais</option>
+            <option value="Conhecimento">Perícias de Conhecimento</option>
+            <option value="Exploração">Perícias de Exploração</option>
+            <option value="Místicas">Perícias Místicas</option>
+        </select>
+        <label for="pericia">Escolha a Perícia:</label>
+        <select id="pericia"></select>
+        <label for="pontos">Pontos na Perícia:</label>
+        <input type="number" id="pontos" value="6" min="0">
+        <label for="bonus">Bônus na Rolagem:</label>
+        <input type="number" id="bonus" value="0">
+        <button onclick="rolarDado()">Rolar 1d20</button>
+        <div class="dice" id="dice">🎲</div>
+        <p class="result" id="resultado"></p>
+        <p class="result" id="resultadoDetalhado"></p>
+    </div>
+
+    <script>
+        const periciasPorArea = {
+            "Combate": ["Pontaria", "Luta", "Reflexo", "Fortitude", "Atletismo", "Acrobacia", "Iniciativa"],
+            "Sociais": ["Intimidação", "Enganação", "Diplomacia", "Intuição", "Jogatina", "Nobreza", "Sedução"],
+            "Conhecimento": ["Investigação", "História", "Ciência", "Tecnologia", "Linguística", "Medicina", "Tática"],
+            "Exploração": ["Sobrevivência", "Furtividade", "Percepção", "Pilotagem", "Adestramento", "Cavalgar", "Ladinagem"],
+            "Místicas": ["Feitiçaria", "Rituística", "Misticismo", "Ocultismo", "Religião", "Vontade", "Alquimia"]
+        };
+
+        function atualizarPericias() {
+            const areaSelecionada = document.getElementById("area").value;
+            const selectPericia = document.getElementById("pericia");
+            selectPericia.innerHTML = "";
+            periciasPorArea[areaSelecionada].forEach(pericia => {
+                const option = document.createElement("option");
+                option.value = pericia;
+                option.textContent = pericia;
+                selectPericia.appendChild(option);
+            });
+        }
+
+        function calcularSucesso(rolagem, dt, dado) {
+            if (dado === 1) return "Falha Crítica";
+            if (rolagem >= dt * 0.98) return "Sucesso Crítico";
+            if (rolagem >= dt * 0.85) return "Sucesso Extremo";
+            if (rolagem >= dt * 0.70) return "Sucesso Bom";
+            if (rolagem >= dt * 0.55) return "Sucesso Normal";
+            return "Falha";
+        }
+
+        function rolarDado() {
+            const pontos = parseInt(document.getElementById("pontos").value) || 0;
+            const bonus = parseInt(document.getElementById("bonus").value) || 0;
+            const dt = pontos * 5;
+            const diceElement = document.getElementById("dice");
+            
+            diceElement.style.transform = "rotate(720deg)";
+            diceElement.style.opacity = "0";
+            
+            setTimeout(() => {
+                const dado = Math.floor(Math.random() * 20) + 1;
+                const rolagemTotal = dado + bonus;
+                const resultado = calcularSucesso(rolagemTotal, dt, dado);
+                diceElement.textContent = rolagemTotal;
+                diceElement.style.transform = "rotate(0deg)";
+                diceElement.style.opacity = "1";
+                document.getElementById("resultado").textContent = `Rolagem: ${dado} + Bônus: ${bonus} = ${rolagemTotal}`;
+                document.getElementById("resultadoDetalhado").textContent = `Resultado: ${resultado}`;
+            }, 1000);
+        }
+
+        atualizarPericias();
+
+        // Função para salvar os dados no Local Storage
+function salvarDados() {
+    const dados = {
+        area: document.getElementById("area").value,
+        pericia: document.getElementById("pericia").value,
+        pontos: document.getElementById("pontos").value,
+        bonus: document.getElementById("bonus").value
+    };
+    localStorage.setItem("configuracaoPericia", JSON.stringify(dados));
+}
+
+// Função para carregar os dados salvos
+function carregarDados() {
+    const dadosSalvos = localStorage.getItem("configuracaoPericia");
+    if (dadosSalvos) {
+        const dados = JSON.parse(dadosSalvos);
+        document.getElementById("area").value = dados.area;
+        document.getElementById("pontos").value = dados.pontos;
+        document.getElementById("bonus").value = dados.bonus;
+        atualizarPericias(); // Atualiza a lista de perícias ao carregar
+        setTimeout(() => {
+            document.getElementById("pericia").value = dados.pericia;
+        }, 100); // Pequeno delay para garantir a atualização correta
+    }
+}
+
+// Atualizar as perícias sempre que a área for alterada
+function atualizarPericias() {
+    const areaSelecionada = document.getElementById("area").value;
+    const selectPericia = document.getElementById("pericia");
+    selectPericia.innerHTML = "";
+
+    periciasPorArea[areaSelecionada].forEach(pericia => {
+        const option = document.createElement("option");
+        option.value = pericia;
+        option.textContent = pericia;
+        selectPericia.appendChild(option);
+    });
+
+    salvarDados(); // Salvar automaticamente ao mudar a área
+}
+
+// Adiciona eventos para salvar automaticamente os dados
+document.getElementById("area").addEventListener("change", salvarDados);
+document.getElementById("pericia").addEventListener("change", salvarDados);
+document.getElementById("pontos").addEventListener("input", salvarDados);
+document.getElementById("bonus").addEventListener("input", salvarDados);
+
+// Carregar os dados ao iniciar a página
+carregarDados();
+    </script>
+</body>
+</html>
